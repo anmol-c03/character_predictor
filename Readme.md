@@ -7,17 +7,10 @@
 4. [Results](#results)
 7. [References](#references)
 
-#project-overview
-    This project aims to predict new names by training a model on thousands of existing names. The WaveNet architecture, originally designed for generating raw audio waveforms, is used for character generation. WaveNet is a deep neural network that's fully probabilistic and autoregressive, meaning each output depends on all previous inputs. Although it was designed for audio data, in this project, it has been adapted to generate sequences of characters.
+# Project Overview
+    This project aims to predict new names by training a model on thousands of existing names. The WaveNet architecture, originally designed for generating raw audio waveforms, is used for character generation. WaveNet is a deep neural network that's fully probabilistic and autoregressive, meaning each output depends on all previous inputs. Although it was designed for audio data, in this project, it has been adapted to generate sequences of characters.A common problem with neural networks is that when inputs are combined into a single hidden layer, valuable information can be lost or not mapped correctly. To address this, the project forms pairs of tokens from the original input sequence and processes them through a feed-forward network. This approach helps retain more information during processing.The api.py file, which forms a core component of this project, is based on the WaveNet work of Andrej Karpathy.This project is primarily designed to enhance my learning and improve my familiarity with concepts related to language modeling 
 
-    A common problem with neural networks is that when inputs are combined into a single hidden layer, valuable information can be lost or not mapped correctly. To address this, the project forms pairs of tokens from the original input sequence and processes them through a feed-forward network. This approach helps retain more information during processing.
-
-    The api.py file, which forms a core component of this project, is based on the WaveNet work of Andrej Karpathy.
-
-
-    This project is primarily designed to enhance my learning and improve my familiarity with concepts related to language modeling 
-
-#model
+# model
 
 The model is built on the WaveNet architecture, where pairs of tokens are fed through a feed-forward network. This network comprises several layers: an embedding layer, a FlattenC layer, a linear layer, batch normalization, and a Tanh activation function.
 
