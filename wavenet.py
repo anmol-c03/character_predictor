@@ -187,8 +187,8 @@ for p in parameters:
     p.requires_grad=True
 
 #defining batches
-def get_batch(self,split):
-    data=x_train if split is 'train' else x_dev
+def get_batch(split):
+    data=x_train if split == 'train' else x_dev
     ix=torch.randint(0,data.shape[0],(batch_size,))
     xs,ys=x_train[ix],y_train[ix]
     return xs,ys
@@ -198,10 +198,10 @@ def estimate_loss():
     out={}
     model.eval()
     for split in ['train','dev']:
-        lossi=torch.zeros(evaluation_iters)
-        for i in range(evaluation_iters):
+        lossi=torch.zeros(10000)
+        for i in range(10000):
             xb,yb=get_batch(split)
-            logits=model(xb,yb)
+            logits=model(xb)
             loss=F.cross_entropy(logits,yb)
             lossi[i]=loss
         out[split]=lossi.mean()
@@ -209,8 +209,7 @@ def estimate_loss():
     return out
 
 
-def training(lr):
-    xb,yb=get_batch('train')
+def training(xb,yb,lr):
             
     logits=model(xb)
     loss=F.cross_entropy(logits,yb)
@@ -251,7 +250,6 @@ split_loss('train')
 split_loss('val')
 
 # prediction phase
-block_size=8
 for i in range(10):
     context=[0]*block_size
     out=[]
