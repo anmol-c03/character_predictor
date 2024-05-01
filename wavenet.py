@@ -12,7 +12,6 @@ max_steps=200000
 batch_size=32
 n=batch_size
 evaluation_iters=10000
-lossi,lri=[],[]
 g=torch.Generator().manual_seed(2147483647)
 
 # reading data
@@ -193,7 +192,7 @@ with torch.no_grad():
 '''
 
 parameters=model.parameters()
-print(sum(p.nelement() for p in parameters))
+print("Total no of model parameters are : ",sum(p.nelement() for p in parameters),'\n')
 for p in parameters:
     p.requires_grad=True
 
@@ -220,6 +219,8 @@ def estimate_loss():
     return out
 
 
+        
+
 def training(xb,yb,lr):
             
     logits=model(xb)
@@ -232,13 +233,18 @@ def training(xb,yb,lr):
     for p in parameters:
         p.data+=-lr*p.grad
 
+
+
 for i in range(max_steps):
-    lr=0.1 if i<100000 else 0.01
-    training(lr)
-    if i % evaluation_iters ==0:
-        losses=estimate_loss()
-        print(f'iters{i}\t train_loss{losses['train']}\t val_loss{losses['dev']}')
+    xb, yb = get_batch('train')
+    lr = 0.1 if i < 100000 else 0.01  
+    training(xb,yb, lr)  
     
+    if i % 10000 == 0:
+        losses = estimate_loss()
+        print(f"iters {i}  train_loss {losses['train']}  val_loss {losses['dev']}")
+
+
 
 
 class evaluation:
