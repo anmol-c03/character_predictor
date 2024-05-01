@@ -15,16 +15,18 @@ evaluation_iters=10000
 lossi,lri=[],[]
 g=torch.Generator().manual_seed(2147483647)
 
-
+# reading data
 words=open('names.txt','r').read().splitlines()
 char=sorted(set(''.join(words))) 
+
+# encoding and decoding data
 stoi={s:(i+1) for i,s in enumerate(char)}
 stoi['.']=0
 itos={i:s for s,i in stoi.items()}
 vocab_size=len(itos)
 
 
-
+#building dataset
 def build_dataset(words):
     x,y=[],[]
     for w in words:
@@ -38,6 +40,7 @@ def build_dataset(words):
     ys=torch.tensor(y)
     return xs,ys
 
+#splitting in train,test,val
 random.seed(42)
 random.shuffle(words)
 n1=int(0.8*len(words))
@@ -146,6 +149,14 @@ class Sequential:
         self.out=x
         return self.out
 
+    def eval(self):
+        for layer in self.layers:
+            layer.training=False
+
+    def train(self):
+        for layer in self.layers:
+            layer.training=True
+
     def parameters(self):
         return [p for layer in self.layers for p in layer.parameters()]
 #----------------------------------------------------------------------------------------------------------------------------------------------      
@@ -164,7 +175,7 @@ model=Sequential([
 ])
 
 with torch.no_grad():
-    model.layers[-1].weight*=0.1
+    model.layers[-1].weight*=0.1# this is to make model less confident on its prediction
     '''
     this commented out layer below is used to properly initialize the all the weights such that after 
     matrix operations, the indermediate logits will have gussian distribution and that distrb wii be 
@@ -230,36 +241,40 @@ for i in range(max_steps):
     
 
 
-
-for layer in model.layers:
-    layer.training=False
-
+class evaluation:
+    def __init__(self):
+        pass
 # evaluation phase 
-@torch.no_grad() # this decorator disables gradient tracking inside pytorch
-def split_loss(split):
-    xb,yb = {
-        'train': (x_train, y_train),
-        'val': (x_dev, y_dev),
-        'test': (x_test, y_test),
-      }[split]
-    logits=model(xb)
-    loss = F.cross_entropy(logits, yb)
-    print(split, loss.item())
+    @torch.no_grad() # this decorator disables gradient tracking inside pytorch
+    def split_loss(self,split):
+        xb,yb = {
+            'train': (x_train, y_train),
+            'val': (x_dev, y_dev),
+            'test': (x_test, y_test),
+        }[split]
+        model.eval()
+        logits=model(xb)
+        loss = F.cross_entropy(logits, yb)
+        print(split, loss.item())
 
-split_loss('train')
-split_loss('val')
-
-# prediction phase
-for i in range(10):
-    context=[0]*block_size
-    out=[]
-    while True:
-        logits=model(torch.tensor([context]))
-        prob=F.softmax(logits,dim=1)
-        ix=torch.multinomial(prob,num_samples=1,).item()
-        out.append(itos[ix])
-        context=context[1:]+[ix]
-        if ix==0:
-            break
-    print(''.join(out))
     
+
+    # prediction phase
+    def generator(self):
+        for i in range(10):
+            context=[0]*block_size
+            out=[]
+            while True:
+                logits=model(torch.tensor([context]))
+                prob=F.softmax(logits,dim=1)
+                ix=torch.multinomial(prob,num_samples=1,).item()
+                out.append(itos[ix])
+                context=context[1:]+[ix]
+                if ix==0:
+                    break
+            print(''.join(out))
+        
+evaluator=evaluation()
+evaluator.split_loss('train')
+evaluator.split_loss('val')
+evaluator.generate()
