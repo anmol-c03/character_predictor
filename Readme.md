@@ -45,6 +45,6 @@ The following names were generated during the training process:
 
 # Refrences
 
-[!https://arxiv.org/pdf/1609.03499]
+[WaveNet](https://arxiv.org/pdf/1609.03499)
 
-[!https://www.jmlr.org/papers/volume3/bengio03a/bengio03a.pdf]
+[MLP](https://www.jmlr.org/papers/volume3/bengio03a/bengio03a.pdf)
