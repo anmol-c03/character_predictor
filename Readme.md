@@ -23,31 +23,25 @@ Tanh Activation: It applies the hyperbolic tangent function to add non-linearity
     ![wavenet_architecture](https://github.com/anmol-c03/character_predictor/blob/main/wavenet.png)
 
 # Results
-Training_loss:1.78427481
 
-validation_loss:1.978255152
+### Loss Values
+- **Training Loss**: 1.78427481
+- **Validation Loss**: 1.978255152
 
-Names generated:
+### Names Generated
+The following names were generated during the training process:
 
-kayla.
+- kayla
+- slant
+- carius
+- kalani
+- lexande
+- kayron
+- jalys
+- rilinger
+- phoenix
+- emmauri
 
-slant.
-
-carius.
-
-kalani.
-
-lexande.
-
-kayron.
-
-jalys.
-
-rilinger.
-
-phoenix.
-
-emmauri.
 
 # Refrences
 
