@@ -1,8 +1,9 @@
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import random
-
+from api import Linear,BatchNorm1d,Tanh,Embedding,FlattenC,Sequential
 
 #declaring variables
 block_size=8
@@ -49,133 +50,104 @@ x_train,y_train=build_dataset(words[:n1])
 x_dev,y_dev=build_dataset(words[n1:n2])
 x_test,y_test=build_dataset(words[n2:])
 #-------------------------------------------------------------------------------------------------------------
-class Linear:
-    def __init__(self,fan_in,fan_out,bias=True):
-        self.weight=torch.randn((fan_in,fan_out),generator=g)/fan_in**0.5
-        self.bias=torch.zeros(fan_out) if bias else None
-        
-    def __call__(self,x):
-        self.out=x @ self.weight
-        if self.bias is not None:
-            self.out+=self.bias
-        return self.out
-        
-    def parameters(self):
-        return [self.weight]+([] if self.bias is None else [self.bias])
-#--------------------------------------------------------------------------------------------------------------------------------------------
-class BatchNorm1d:
-  
-  def __init__(self, dim, eps=1e-5, momentum=0.1):
-    self.eps = eps
-    self.momentum = momentum
-    self.training = True
-      
-    self.gamma = torch.ones(dim)
-    self.beta = torch.zeros(dim)
 
-    self.running_mean = torch.zeros(dim)
-    self.running_var = torch.ones(dim)
-  
-  def __call__(self, x):
+def get_batch(split):
+    data=x_train if split == 'train' else x_dev
+    ix=torch.randint(0,data.shape[0],(batch_size,))
+    xs,ys=x_train[ix],y_train[ix]
+    return xs,ys
 
-    if self.training:
-      if x.ndim==2:
-          dim=0
-      elif x.ndim==3:
-          dim=(0,1)
-      xmean = x.mean(dim, keepdim=True) 
-      xvar = x.var(dim, keepdim=True) 
-    else:
-      xmean = self.running_mean
-      xvar = self.running_var
+
+
+class wavenet_model():
+    def __init__(self):
+        self.model=Sequential([
+                                Embedding(vocab_size,n_emb),
+                                FlattenC(2),
+                                Linear(2*n_emb,n_hidden,bias=False),BatchNorm1d(n_hidden),Tanh(),
+                                FlattenC(2),    
+                                Linear(2*n_hidden,n_hidden,bias=False),BatchNorm1d(n_hidden),Tanh(),
+                                FlattenC(2),    
+                                Linear(2*n_hidden,n_hidden,bias=False),BatchNorm1d(n_hidden),Tanh(),
+                                Linear(           n_hidden,vocab_size)
+                            ])
+        with torch.no_grad():
+            self.model.layers[-1].weight*=0.1
+        self.parameters=self.model.parameters()
+        for p in self.parameters:
+            p.requires_grad=True
+        
+
+    def estimate_loss(self):
+        out={}
+        self.model.eval()
+        for split in ['train','dev']:
+            lossi=torch.zeros(10000)
+            for i in range(10000):
+                xb,yb=get_batch(split)
+                logits=self.model(xb)
+                loss=F.cross_entropy(logits,yb)
+                lossi[i]=loss
+            out[split]=lossi.mean()
+        self.model.train()
+        return out
+        
+    def forward(self,xb,yb,lr):
+        logits=self.model(xb)
+        loss=F.cross_entropy(logits,yb)
+            
+        for p in self.parameters:
+            p.grad=None
+        loss.backward()
+
+        for p in self.parameters:
+            p.data+=-lr*p.grad
     
-    xhat = (x - xmean) / torch.sqrt(xvar + self.eps) 
-      
-    self.out = self.gamma * xhat + self.beta
+    @torch.no_grad() # this decorator disables gradient tracking inside pytorch
+    def evaluate(self,split):
+        xb,yb = {
+            'train': (x_train, y_train),
+            'dev': (x_dev, y_dev),
+            'test': (x_test, y_test),
+        }[split]
+        self.model.eval()
+        logits=self.model(xb)
+        loss = F.cross_entropy(logits, yb)
+        print(split, loss.item())
 
-    if self.training:
-      with torch.no_grad():
-        self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * xmean
-        self.running_var = (1 - self.momentum) * self.running_var + self.momentum * xvar
-    return self.out
-  
-  def parameters(self):
-    return [self.gamma, self.beta]
-
-#--------------------------------------------------------------------------------------------------------------------------------------------
-class Tanh:
-  def __call__(self, x):
-    self.out = torch.tanh(x)
-    return self.out
-      
-  def parameters(self):
-    return []
-#--------------------------------------------------------------------------------------------------------------------------------------------      
-class Embedding:
-    def __init__(self,num_emb,emb_dim):
-        self.weight=torch.randn(num_emb,emb_dim,generator=g)
-
-    def __call__(self,index):
-        self.out=self.weight[index]
-        return self.out
-
-    def parameters(self):
-        return [self.weight]
-
-#--------------------------------------------------------------------------------------------------------------------------------------------
-class FlattenC:
-    def __init__(self,n):
-        self.n=n
-        
-    def __call__(self,x):
-        B,T,C=x.shape
-        x=x.view(B,T//self.n,C*self.n)
-        if x.shape[1]==1:
-            x=x.squeeze(1)
-        self.out=x
-        return self.out
-
-    def parameters(self):
-        return []
-#----------------------------------------------------------------------------------------------------------------------------------------------
-class Sequential:
-    def __init__(self,layers):
-        self.layers=layers
-
-    def __call__(self,x):
-        for layer in self.layers:
-            x=layer(x)
-        self.out=x
-        return self.out
-
-    def eval(self):
-        for layer in self.layers:
-            layer.training=False
-
-    def train(self):
-        for layer in self.layers:
-            layer.training=True
-
-    def parameters(self):
-        return [p for layer in self.layers for p in layer.parameters()]
-#----------------------------------------------------------------------------------------------------------------------------------------------      
+    def generate(self):
+        for i in range(10):
+            context=[0]*block_size
+            out=[]
+            while True:
+                logits=self.model(torch.tensor([context]))
+                prob=F.softmax(logits,dim=1)
+                ix=torch.multinomial(prob,num_samples=1,).item()
+                out.append(itos[ix])
+                context=context[1:]+[ix]
+                if ix==0:
+                    break
+            print(''.join(out))
 
 
 
-model=Sequential([
-    Embedding(vocab_size,n_emb),
-    FlattenC(2),
-    Linear(2*n_emb,n_hidden,bias=False),BatchNorm1d(n_hidden),Tanh(),
-    FlattenC(2),    
-    Linear(2*n_hidden,n_hidden,bias=False),BatchNorm1d(n_hidden),Tanh(),
-    FlattenC(2),    
-    Linear(2*n_hidden,n_hidden,bias=False),BatchNorm1d(n_hidden),Tanh(),
-    Linear(           n_hidden,vocab_size)
-])
+wavenet=wavenet_model()
+for i  in range(max_steps):
+    if i % evaluation_iters==0:
+        losses=wavenet.estimate_loss()
+        print(f"steps{i}\t train_loss{losses['train']}\t val_loss{losses['dev']}")
+    xb,yb=get_batch('train')
+    lr=0.1 if i<100000 else 0.01
+    wavenet.forward(xb,yb,lr)
 
-with torch.no_grad():
-    model.layers[-1].weight*=0.1# this is to make model less confident on its prediction
-    '''
+for split in ['train','dev','test']:
+    wavenet.evaluate(split)
+
+wavenet.generate()
+
+
+
+'''
     this commented out layer below is used to properly initialize the all the weights such that after 
     matrix operations, the indermediate logits will have gussian distribution and that distrb wii be 
     standard(it is ensured by sqrt(fan_in) during weights initialization in Linear class) 
@@ -191,96 +163,4 @@ with torch.no_grad():
             layer.weight*=1 #5/3
 '''
 
-parameters=model.parameters()
-print("Total no of model parameters are : ",sum(p.nelement() for p in parameters),'\n')
-for p in parameters:
-    p.requires_grad=True
 
-#defining batches
-def get_batch(split):
-    data=x_train if split == 'train' else x_dev
-    ix=torch.randint(0,data.shape[0],(batch_size,))
-    xs,ys=x_train[ix],y_train[ix]
-    return xs,ys
-
-@torch.no_grad()
-def estimate_loss():
-    out={}
-    model.eval()
-    for split in ['train','dev']:
-        lossi=torch.zeros(10000)
-        for i in range(10000):
-            xb,yb=get_batch(split)
-            logits=model(xb)
-            loss=F.cross_entropy(logits,yb)
-            lossi[i]=loss
-        out[split]=lossi.mean()
-    model.train()
-    return out
-
-
-        
-
-def training(xb,yb,lr):
-            
-    logits=model(xb)
-    loss=F.cross_entropy(logits,yb)
-            
-    for p in parameters:
-        p.grad=None
-    loss.backward()
-
-    for p in parameters:
-        p.data+=-lr*p.grad
-
-
-
-for i in range(max_steps):
-    xb, yb = get_batch('train')
-    lr = 0.1 if i < 100000 else 0.01  
-    training(xb,yb, lr)  
-    
-    if i % 10000 == 0:
-        losses = estimate_loss()
-        print(f"iters {i}  train_loss {losses['train']}  val_loss {losses['dev']}")
-
-
-
-
-class evaluation:
-    def __init__(self):
-        pass
-# evaluation phase 
-    @torch.no_grad() # this decorator disables gradient tracking inside pytorch
-    def split_loss(self,split):
-        xb,yb = {
-            'train': (x_train, y_train),
-            'val': (x_dev, y_dev),
-            'test': (x_test, y_test),
-        }[split]
-        model.eval()
-        logits=model(xb)
-        loss = F.cross_entropy(logits, yb)
-        print(split, loss.item())
-
-    
-
-    # prediction phase
-    def generator(self):
-        for i in range(10):
-            context=[0]*block_size
-            out=[]
-            while True:
-                logits=model(torch.tensor([context]))
-                prob=F.softmax(logits,dim=1)
-                ix=torch.multinomial(prob,num_samples=1,).item()
-                out.append(itos[ix])
-                context=context[1:]+[ix]
-                if ix==0:
-                    break
-            print(''.join(out))
-        
-evaluator=evaluation()
-evaluator.split_loss('train')
-evaluator.split_loss('val')
-evaluator.generate()
