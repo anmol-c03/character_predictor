@@ -20,7 +20,7 @@ FlattenC Layer: This is used to combine token pairs into a single representation
 Linear Layer: Similar to nn.Linear in PyTorch, it applies a linear transformation to the input data.
 Batch Normalization: This layer normalizes the output of the linear layer, helping with training stability and convergence.
 Tanh Activation: It applies the hyperbolic tangent function to add non-linearity to the network.
-    ![wavenet_architecture](wavenet/wavenet.png)
+    ![wavenet_architecture](https://github.com/anmol-c03/character_predictor/blob/main/wavenet.png)
 
 # Results
 Training_loss:1.78427481
