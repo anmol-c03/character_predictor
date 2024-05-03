@@ -54,7 +54,8 @@ x_test,y_test=build_dataset(words[n2:])
 def get_batch(split):
     data=x_train if split == 'train' else x_dev
     ix=torch.randint(0,data.shape[0],(batch_size,))
-    xs,ys=x_train[ix],y_train[ix]
+    xs=data[ix]
+    ys=y_train[ix] if split=='train' else y_dev[ix]
     return xs,ys
 
 
