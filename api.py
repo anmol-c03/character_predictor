@@ -4,6 +4,9 @@ import torch.nn.functional as F
 g=torch.Generator().manual_seed(2147483647)
 
 class Linear:
+    '''Though i have defined the weights as (fan_in,fan_out)
+     torch.nn.linear defines weight as  (fan_out,fan_in)
+     and thats the huge diff and one should always consider that while initializing linear layer'''
     def __init__(self,fan_in,fan_out,bias=True):
         self.weight=torch.randn((fan_in,fan_out),generator=g)/fan_in**0.5
         self.bias=torch.zeros(fan_out) if bias else None
