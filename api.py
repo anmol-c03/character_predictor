@@ -10,15 +10,38 @@ class Linear:
     def __init__(self,fan_in,fan_out,bias=True):
         self.weight=torch.randn((fan_in,fan_out),generator=g)/fan_in**0.5
         self.bias=torch.zeros(fan_out) if bias else None
-        
+
+    # def round_clip(self,xs):
+    #     x=xs/torch.mean(xs)
+    #     x=x.view(-1)
+    #     out=torch.zeros(x.shape)
+    #     out=torch.clamp(torch.round(x),-1,1)
+    #     return out 
+    
     def __call__(self,x):
-        self.out=x @ self.weight
+        y=x @ self.weight
         if self.bias is not None:
-            self.out+=self.bias
+            y+=self.bias
+        # self.out=self.round_clip(y)
+        self.out=y
         return self.out
         
     def parameters(self):
         return [self.weight]+([] if self.bias is None else [self.bias])
+    
+#actual implementation of linear layer in pytorch looks similar to this
+# class Linear:
+#     def __init__(self,fan_in,fan_out,bias=True):
+#         self.weight=torch.randn((fan_out,fan_in),generator=g)/fan_in**0.5
+#         self.bias=torch.zeros(fan_out) if bias else None  
+
+#     def __call__(self,x):
+#         y=x @ self.weight.T
+#         if self.bias is not None:
+#             y+=self.bias
+#         # self.out=self.round_clip(y)
+#         self.out=y
+#         return self.out
 #--------------------------------------------------------------------------------------------------------------------------------------------
 class BatchNorm1d:
   
