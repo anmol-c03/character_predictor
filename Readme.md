@@ -65,10 +65,7 @@ docker buildx build --platform linux/arm64 -t wavenet:1.0 .
 ```bash
 docker-compose -f docker-compose.yml up
 ```
-    or one can do 
-```bash
-docker run wavenet:1.0
-```
+
 
 
 # Refrences
