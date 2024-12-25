@@ -1,0 +1,6 @@
+version: "3"
+
+services:
+    wavenet:
+      image: wavenet:1.0 # keep the tag that you give while building image 
+
