@@ -45,7 +45,7 @@ The following names were generated during the training process:
 # Installation
 To use this project, follow these steps:
 
-1. ** clone the project **
+1. clone the project 
 ```bash 
 git clone https://github.com/anmol-c03/character_predictor.git && \
 cd character_predictor
