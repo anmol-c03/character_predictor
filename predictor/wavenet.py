@@ -1,22 +1,23 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import matplotlib.pyplot as plt
 import random
 from api import Linear,BatchNorm1d,Tanh,Embedding,FlattenC,Sequential
+import time
 
+# from bitnet import BitLinear
 #declaring variables
 block_size=8
-n_emb=24
-n_hidden=128
-max_steps=200000
-batch_size=32
+n_emb=12
+n_hidden=64
+max_steps=200
+batch_size=4
 n=batch_size
-evaluation_iters=10000
+evaluation_iters=10
 g=torch.Generator().manual_seed(2147483647)
 
 # reading data
-words=open('names.txt','r').read().splitlines()
+words=open('./names.txt','r').read().splitlines()
 char=sorted(set(''.join(words))) 
 
 # encoding and decoding data
@@ -133,6 +134,8 @@ class wavenet_model():
 
 
 wavenet=wavenet_model()
+
+start_time=time.time()
 for i  in range(max_steps):
     if i % evaluation_iters==0:
         losses=wavenet.estimate_loss()
@@ -144,6 +147,7 @@ for i  in range(max_steps):
 for split in ['train','dev','test']:
     wavenet.evaluate(split)
 
+print('time taken to train',time.time()-start_time)
 wavenet.generate()
 
 

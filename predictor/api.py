@@ -33,7 +33,7 @@ class Linear:
 # class Linear:
 #     def __init__(self,fan_in,fan_out,bias=True):
 #         self.weight=torch.randn((fan_out,fan_in),generator=g)/fan_in**0.5
-#         self.bias=torch.zeros(fan_out) if bias else None  
+#         self.bias=torch.zeros(fan_out) if bias else None 
 
 #     def __call__(self,x):
 #         y=x @ self.weight.T
@@ -96,7 +96,7 @@ class Embedding:
         self.weight=torch.randn(num_emb,emb_dim,generator=g)
 
     def __call__(self,index):
-        self.out=self.weight[index]
+        self.out=self.weight[index] 
         return self.out
 
     def parameters(self):
