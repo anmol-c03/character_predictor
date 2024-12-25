@@ -43,6 +43,14 @@ The following names were generated during the training process:
 - emmauri
 
 # Installation
+To use this project, follow these steps:
+
+1. ** clone the project **
+```bash 
+git clone https://github.com/anmol-c03/character_predictor.git && \
+cd character_predictor
+```
+2. Build the docker image
 
 **For Linux Os(linux/amd64)**
 ```bash
@@ -52,8 +60,15 @@ docker build -t wavenet:1.0 .
 ```bash
 docker buildx build --platform linux/arm64 -t wavenet:1.0 .
 ```
+3. Run the container
 
-
+```bash
+docker-compose -f docker-compose.yml up
+```
+or one can do 
+```bash
+docker run wavenet:1.0
+```
 
 
 # Refrences
