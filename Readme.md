@@ -42,6 +42,19 @@ The following names were generated during the training process:
 - phoenix
 - emmauri
 
+# Installation
+
+**For Linux Os(linux/amd64)**
+```bash
+docker build -t wavenet:1.0 .
+```
+**For MacOs(linux/arm64)**
+```bash
+docker buildx build --platform linux/arm64 -t wavenet:1.0 .
+```
+
+
+
 
 # Refrences
 
