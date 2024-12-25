@@ -8,13 +8,14 @@ import time
 # from bitnet import BitLinear
 #declaring variables
 block_size=8
-n_emb=12
-n_hidden=64
-max_steps=200
-batch_size=4
+n_emb=24
+n_hidden=128
+max_steps=200000
+batch_size=32
 n=batch_size
-evaluation_iters=10
+evaluation_iters=10000
 g=torch.Generator().manual_seed(2147483647)
+
 
 # reading data
 words=open('./names.txt','r').read().splitlines()
