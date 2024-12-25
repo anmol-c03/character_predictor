@@ -52,11 +52,11 @@ cd character_predictor
 ```
 2. Build the docker image
 
-**For Linux Os(linux/amd64)**
+- **For Linux Os(linux/amd64)**
 ```bash
 docker build -t wavenet:1.0 .
 ```
-**For MacOs(linux/arm64)**
+- **For MacOs(linux/arm64)**
 ```bash
 docker buildx build --platform linux/arm64 -t wavenet:1.0 .
 ```
@@ -65,7 +65,7 @@ docker buildx build --platform linux/arm64 -t wavenet:1.0 .
 ```bash
 docker-compose -f docker-compose.yml up
 ```
-or one can do 
+    or one can do 
 ```bash
 docker run wavenet:1.0
 ```
