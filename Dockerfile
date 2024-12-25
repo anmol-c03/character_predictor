@@ -5,7 +5,7 @@ RUN mkdir -p /home/wavenet
 RUN apt update && \
     apt install -y nano
 
-COPY . /home/wavenet
+COPY ./predictor /home/wavenet
 
 WORKDIR /home/wavenet
 
